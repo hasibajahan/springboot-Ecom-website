@@ -27,23 +27,6 @@ public class CategoryController {
 	}
 
 	
-//	@GetMapping("/api/public/categories")
-//	public List<Category> getAllCategories() {
-//		return categoryService.getAllCategory();
-//	}
-//
-//	@PostMapping("/api/public/categories")
-//	public String createCategory(@RequestBody Category category) {
-//		categoryService.createCategory(category);
-//		return "Category added successfully.";
-//	}
-	
-//	//deleting category and returning the list
-//	@DeleteMapping("/api/admin/categories/{categoryId}")
-//	public String deleteCategory(@PathVariable Long categoryId) {
-//		String status=categoryService.deleteCategory(categoryId);
-//		return status;
-//	}
 	
 	//using ResponseEntity in all endpoints
 	@GetMapping("/api/public/categories")
@@ -77,7 +60,7 @@ public class CategoryController {
 												@PathVariable Long categoryId) {
 		try {
 			Category savedCategory=categoryService.updateCategory(category,categoryId);
-			return new ResponseEntity<>("Category with category id: "+category, HttpStatus.OK);
+			return new ResponseEntity<>("Updated category with category id: "+categoryId, HttpStatus.OK);
 		}catch(ResponseStatusException e) {
 			return new ResponseEntity<>(e.getReason(),e.getStatusCode());
 		}
