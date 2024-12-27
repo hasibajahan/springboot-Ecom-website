@@ -1,6 +1,5 @@
 package com.ecommerce.project.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +16,7 @@ import com.ecommerce.project.repository.CategoryRepository;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-//	private List<Category> categories = new ArrayList<>();
+
 	private Long nextId = 1L;// variable that keeping track of the ids
 	
 	@Autowired
@@ -28,7 +27,6 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	public List<Category> getAllCategory() {
 		return categoryRepository.findAll();
-//      return categories;
 	}
 
 	// CREATE
@@ -37,25 +35,18 @@ public class CategoryServiceImpl implements CategoryService {
 		category.setCategoryId(nextId++);// To manage the values of ids. as IDs are suppose to be unique, we cannot rely
 											// on user for this. So, we better generate it automatically in the
 											// application itself.
-		categories.add(category);
+		categoryRepository.save(category);
 		
 	}
 
 	// DELETE
 	@Override
 	public String deleteCategory(Long categoryId) {
-		
+		List<Category> categories=categoryRepository.findAll();
 		Category category = categories.stream().filter(c -> c.getCategoryId().equals(categoryId)).findFirst()
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resource not found."));
-
-//				.orElse(null);//the user will only pass the category id . then we have to find the category id that is matching with the input category id.
-
-//		if(category==null) {
-//			return "Category not found.";
-//		}
-
-		categories.remove(category);
-//		categoryRepository.delete(category); // making use of category repository to perform the crud operation.
+		
+		categoryRepository.delete(category);
 		return "Category with categoryId: " + categoryId + " deleted successfully.";
 	}
 
@@ -63,14 +54,15 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	public Category updateCategory(Category category, Long categoryId) {
 		
-
+		List<Category> categories=categoryRepository.findAll();
 		Optional<Category> optionalCategory = categories.stream().filter(c -> c.getCategoryId().equals(categoryId))
 				.findFirst();
 
 		if (optionalCategory.isPresent()) {
 			Category existingCategory=optionalCategory.get();
 			existingCategory.setCategoryName(category.getCategoryName());
-			return existingCategory;
+			Category savedCategory=categoryRepository.save(existingCategory);
+			return savedCategory;
 		} else {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found.");
 		}
