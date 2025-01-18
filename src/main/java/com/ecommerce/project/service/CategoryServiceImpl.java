@@ -2,12 +2,10 @@ package com.ecommerce.project.service;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
+import com.ecommerce.project.exceptions.APIException;
+import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.repository.CategoryRepository;
 
@@ -16,32 +14,39 @@ import com.ecommerce.project.repository.CategoryRepository;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-	private Long nextId = 1L;// variable that keeping track of the ids
-
 	@Autowired
 	private CategoryRepository categoryRepository;
 
 	// READ
 	@Override
 	public List<Category> getAllCategory() {
+		List<Category> categories= categoryRepository.findAll();
+		if(categories.isEmpty()) {
+			throw new APIException("No category created till now.");
+		}
 		return categoryRepository.findAll();
 	}
 
 	// CREATE
 	@Override
 	public void createCategory(Category category) {
-		category.setCategoryId(nextId++);// To manage the values of ids. as IDs are suppose to be unique, we cannot rely
-											// on user for this. So, we better generate it automatically in the
-											// application itself.
+		
+		Category savedCategory=categoryRepository.findByCategoryName(category.getCategoryName());
+		
+		if(savedCategory!=null) {
+			throw new APIException("Category with the name "+category.getCategoryName()+" already exists!!!");
+		}
+		
+		//HERE WE WERE SAVING THE CATEGORY DIRECTLY. SO THERE IS A POSSIBILITY OF HAVING 
+		//DUPLICATE CATEGORY NAME. SO WE ADDED THE VALIDATION (ABOVE).
 		categoryRepository.save(category);
-
-	}
+    }
 
 	// DELETE
 	@Override
 	public String deleteCategory(Long categoryId) {
 		Category category=categoryRepository
-				.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resource not found."));
+				.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category","categoryId",categoryId));
 		
 		categoryRepository.delete(category);
 		return "Category with categoryId: " + categoryId + " deleted successfully.";
@@ -53,7 +58,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 		Optional<Category> savedCategoryOptional = categoryRepository.findById(categoryId);
 		Category savedCategory = savedCategoryOptional
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resource not found."));
+				.orElseThrow(() -> new ResourceNotFoundException("Category","categoryId",categoryId));
 
 		category.setCategoryId(categoryId);
 
