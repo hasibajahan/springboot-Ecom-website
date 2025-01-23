@@ -1,15 +1,17 @@
 package com.ecommerce.project.service;
 
-import java.util.List;
 
-import com.ecommerce.project.model.Category;
+
+
+import com.ecommerce.project.payload.CategoryDTO;
+import com.ecommerce.project.payload.CategoryResponse;
 
 //using interface to achieve loose coupling and modularity in the code base
 public interface CategoryService {
 	
-	List<Category> getAllCategory();
-	void createCategory(Category category);
-	String deleteCategory(Long categoryId);
-	Category updateCategory(Category category, Long categoryId);
+	CategoryResponse getAllCategory();
+    CategoryDTO createCategory(CategoryDTO categoryDTO);
+	CategoryDTO deleteCategory(Long categoryId);
+	CategoryDTO updateCategory(CategoryDTO categoryDTO, Long categoryId);
 	
 }
