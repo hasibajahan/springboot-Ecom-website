@@ -32,12 +32,21 @@ public class CategoryController {
 		this.categoryService = categoryService;
 	}
 
-	
+	//to know the page number and no of objects in each page 
+	@GetMapping("/echo")
+	public ResponseEntity<String> echoMessage(@RequestParam(name="message", required = false) String message){
+
+		//	public ResponseEntity<String> echoMessage(@RequestParam(name="message", defaultValue = "Hi") String message){
+		return new ResponseEntity<>("Echoed message: "+message,HttpStatus.OK);
+	}
 	
 	//using ResponseEntity in all end points
 	@GetMapping("/public/categories")
-	public ResponseEntity<CategoryResponse> getAllCategories() {
-		 CategoryResponse categories=categoryService.getAllCategory();
+	public ResponseEntity<CategoryResponse> getAllCategories(
+			@RequestParam(name="pageNumber") Integer pageNumber,
+			@RequestParam(name="pageSize") Integer pageSize) {
+		 
+		CategoryResponse categories=categoryService.getAllCategory(pageNumber,pageSize);
 		 return new ResponseEntity<>(categories,HttpStatus.OK);
 	}
 

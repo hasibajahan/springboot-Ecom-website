@@ -4,6 +4,9 @@ package com.ecommerce.project.service;
 import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.ecommerce.project.exceptions.APIException;
 import com.ecommerce.project.exceptions.ResourceNotFoundException;
@@ -25,8 +28,15 @@ public class CategoryServiceImpl implements CategoryService {
 	
 	// READ
 	@Override
-	public CategoryResponse getAllCategory() {
-		List<Category> categories= categoryRepository.findAll();
+	public CategoryResponse getAllCategory(Integer pageNumber,Integer pageSize) {
+		
+		//Pageable is an interface that represents the request for a specific page of data from the database.
+		Pageable pageDetails=PageRequest.of(pageNumber, pageSize);
+		
+		//Getting the page
+		Page<Category> categoryPage=categoryRepository.findAll(pageDetails);
+		
+		List<Category> categories= categoryPage.getContent();
 		if(categories.isEmpty()) {
 			throw new APIException("No category created till now.");
 		}
@@ -35,7 +45,15 @@ public class CategoryServiceImpl implements CategoryService {
 				.map(category -> modelMapper.map(category, CategoryDTO.class))
 				.toList();
 		CategoryResponse categoryResponse=new CategoryResponse();
+		
+		//getting the content
 		categoryResponse.setContent(categoryDTOs);
+		//getting all the pagination metadata along with the content
+		categoryResponse.setPageNumber(categoryPage.getNumber());
+		categoryResponse.setPageSize(categoryPage.getSize());
+		categoryResponse.setTotalElements(categoryPage.getTotalElements());
+		categoryResponse.setTotalPages(categoryPage.getTotalPages());
+		categoryResponse.setLastPage(categoryPage.isLast());
 		return categoryResponse;
 	}
 
@@ -78,4 +96,5 @@ public class CategoryServiceImpl implements CategoryService {
          savedCategory = categoryRepository.save(category);
 		return modelMapper.map(savedCategory, CategoryDTO.class);
 	}
+	
 }

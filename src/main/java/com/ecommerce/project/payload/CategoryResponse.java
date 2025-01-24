@@ -11,5 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CategoryResponse {
 	private List<CategoryDTO> content;
-	
+	//for the metadata
+	private Integer pageNumber;
+	private Integer pageSize;
+	private Long totalElements;
+	private Integer totalPages;
+	private boolean lastPage;
 }
