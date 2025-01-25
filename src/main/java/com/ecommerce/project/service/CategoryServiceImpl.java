@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.ecommerce.project.exceptions.APIException;
 import com.ecommerce.project.exceptions.ResourceNotFoundException;
@@ -28,10 +29,15 @@ public class CategoryServiceImpl implements CategoryService {
 	
 	// READ
 	@Override
-	public CategoryResponse getAllCategory(Integer pageNumber,Integer pageSize) {
+	public CategoryResponse getAllCategory(Integer pageNumber,Integer pageSize,String sortBy,String sortOrder) {
+		
+		//For sorting the categories
+		Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
+				?Sort.by(sortBy).ascending()
+				:Sort.by(sortBy).descending();
 		
 		//Pageable is an interface that represents the request for a specific page of data from the database.
-		Pageable pageDetails=PageRequest.of(pageNumber, pageSize);
+		Pageable pageDetails=PageRequest.of(pageNumber, pageSize,sortByAndOrder);
 		
 		//Getting the page
 		Page<Category> categoryPage=categoryRepository.findAll(pageDetails);
