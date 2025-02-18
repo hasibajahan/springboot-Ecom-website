@@ -75,6 +75,7 @@ public class CategoryController {
 	
 			CategoryDTO savedCategoryDTO=categoryService.updateCategory(categoryDTO,categoryId);
 			return new ResponseEntity<>(savedCategoryDTO, HttpStatus.OK);
-		
 	}
+	
+	
 }
