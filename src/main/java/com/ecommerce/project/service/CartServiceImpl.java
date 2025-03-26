@@ -21,6 +21,8 @@ import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repository.ProductRepository;
 import com.ecommerce.project.util.AuthUtil;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class CartServiceImpl implements CartService{
 
@@ -61,7 +63,7 @@ public class CartServiceImpl implements CartService{
 		}
 		
 		if(product.getQuantity()<quantity) {
-			throw new APIException("Please, make an order of the "+product.getProductName()
+			throw new APIException("Please, make an order of "+product.getProductName()
 									+" less than or equal to the quantity "+product.getQuantity()+".");
 		}
 		
@@ -133,4 +135,113 @@ public class CartServiceImpl implements CartService{
 		return cartDTOs;
 	}
 
+	@Override
+	public CartDTO getCart(String emailId, Long cartId) {
+		Cart cart=cartRepository.findCartByEmailAndCartId(emailId, cartId);
+		
+		//Validation
+		if(cart==null) {
+			throw new ResourceNotFoundException("Cart","cartId",cartId);
+		}
+		
+		CartDTO cartDTO=modelMapper.map(cart,CartDTO.class);
+		
+		cart.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
+		
+		List<ProductDTO> products=cart.getCartItems().stream()
+				.map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
+				.toList();
+		cartDTO.setProducts(products);
+		return cartDTO;
+	}
+
+	//To update the quantity of the items in the cart(add or delete)
+	@Transactional
+	@Override
+	public CartDTO updateProductQuantityInCart(Long productId, Integer quantity) {
+		String emailId=authUtil.loggedInEmail();
+		Cart userCart=cartRepository.findCartByEmail(emailId);
+		Long cartId=userCart.getCartId();
+		
+		Cart cart=cartRepository.findById(cartId)
+				.orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
+		
+		Product product=productRepository.findById(productId)
+				.orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+	
+		//checking the stock
+		if(product.getQuantity() == 0) {
+			throw new APIException(product.getProductName()+" is out of stock.");
+		}
+		
+		//Product is in stock but its' quantity is less than the quantity added in the cart
+		if(product.getQuantity() < quantity) {
+			throw new APIException("Please make an order of "+product.getProductName()
+									+" less than or equal to the quantity " + product.getQuantity() + ".");
+		}	
+		CartItem cartItem=cartItemRepository.findCartItemByProductIdAndCartId(cartId, productId);
+		
+		if(cartItem == null) {
+			throw new APIException("Product " + product.getProductName() + " not available in the cart!!!");
+		}
+		
+		// Calculate new quantity
+        int newQuantity = cartItem.getQuantity() + quantity;
+
+        // Validation to prevent negative quantities
+        if (newQuantity < 0) {
+            throw new APIException("The resulting quantity cannot be negative.");
+        }
+
+        if (newQuantity == 0){
+            deleteProductFromCart(cartId, productId);
+        } else {
+        	//Update the product details
+            cartItem.setProductPrice(product.getSpecialPrice());
+            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+            cartItem.setDiscount(product.getDiscount());
+            cart.setTotalPrice(cart.getTotalPrice() + (cartItem.getProductPrice() * quantity));
+            cartRepository.save(cart);
+        }
+		CartItem updatedItem = cartItemRepository.save(cartItem);
+		
+		if(updatedItem.getQuantity() == 0) {
+			cartItemRepository.deleteById(updatedItem.getCartItemId());
+		}
+		
+		CartDTO cartDTO=modelMapper.map(cart, CartDTO.class);
+		
+		List<CartItem> cartItems=cart.getCartItems();
+		
+		Stream<ProductDTO> productStream = cartItems.stream().map(item -> {
+            ProductDTO prd = modelMapper.map(item.getProduct(), ProductDTO.class);
+            prd.setQuantity(item.getQuantity());
+            return prd;
+        });
+		
+		cartDTO.setProducts(productStream.toList());
+		
+		return cartDTO;
+	}
+
+	//It will remove the product/item from the cart entirely
+	@Transactional
+	@Override
+	public String deleteProductFromCart(Long cartId, Long productId) {
+		Cart cart=cartRepository.findById(cartId)
+				.orElseThrow(() -> new ResourceNotFoundException("Cart","cartId",cartId));
+		
+		CartItem cartItem=cartItemRepository.findCartItemByProductIdAndCartId(cartId, productId);
+		
+		if(cartItem == null) {
+			 throw new ResourceNotFoundException("Product", "productId", productId);
+		}
+		
+		//if the product/item is present then delete it and update the cart price
+		cart.setTotalPrice(cart.getTotalPrice()-(cartItem.getProductPrice() * cartItem.getQuantity()));
+		
+		cartItemRepository.deleteCartItemByCartIdAndProductId(cartId,productId);
+	
+		return "Product " + cartItem.getProduct().getProductName() + " removed from the cart!!!";
+	}
 }
