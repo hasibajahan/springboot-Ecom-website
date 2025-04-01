@@ -77,10 +77,10 @@ public class User {
 	
 	//Managing addresses
 	@Getter
-	@ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-	@JoinTable(name="user_address",
-			joinColumns = @JoinColumn(name="user_id"),
-			inverseJoinColumns = @JoinColumn(name="address_id"))
+	@OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST,CascadeType.MERGE},orphanRemoval = true)
+//	@JoinTable(name="user_address",
+//			joinColumns = @JoinColumn(name="user_id"),
+//			inverseJoinColumns = @JoinColumn(name="address_id"))
 	private List<Address> addresses=new ArrayList<>();
 	
 	//mapping products to users(sellers)
@@ -90,6 +90,7 @@ public class User {
 			orphanRemoval = true)
 	private Set<Product> products;
 	
+	//Mapping cart to users
 	@ToString.Exclude
 	@OneToOne(mappedBy="user",
 			cascade = {CascadeType.PERSIST,CascadeType.MERGE},

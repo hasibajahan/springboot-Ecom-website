@@ -24,8 +24,8 @@ import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CartRepository;
-import com.ecommerce.project.repository.CategoryRepository;
-import com.ecommerce.project.repository.ProductRepository;
+import com.ecommerce.project.repositories.CategoryRepository;
+import com.ecommerce.project.repositories.ProductRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {

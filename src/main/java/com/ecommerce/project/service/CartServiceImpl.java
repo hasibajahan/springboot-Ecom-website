@@ -18,7 +18,7 @@ import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.repositories.CartItemRepository;
 import com.ecommerce.project.repositories.CartRepository;
-import com.ecommerce.project.repository.ProductRepository;
+import com.ecommerce.project.repositories.ProductRepository;
 import com.ecommerce.project.util.AuthUtil;
 
 import jakarta.transaction.Transactional;
@@ -135,6 +135,7 @@ public class CartServiceImpl implements CartService{
 		return cartDTOs;
 	}
 
+	//Get cart by id
 	@Override
 	public CartDTO getCart(String emailId, Long cartId) {
 		Cart cart=cartRepository.findCartByEmailAndCartId(emailId, cartId);
