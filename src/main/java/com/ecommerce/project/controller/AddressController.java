@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,5 +59,19 @@ public class AddressController {
 		User user=authUtil.loggedInUser();
 		List<AddressDTO> addressList=addressService.getAddressByUser(user);
 		return new ResponseEntity<>(addressList,HttpStatus.OK);
+	}
+	
+	//update address
+	@PutMapping("/addresses/{addressId}")
+	public ResponseEntity<AddressDTO> updateAddress(@PathVariable Long addressId, @RequestBody AddressDTO addressDTO){
+		AddressDTO updatedAddress=addressService.updateAddress(addressId,addressDTO);
+		return new ResponseEntity<>(updatedAddress,HttpStatus.OK);
+	}
+	
+	//Delete address
+	@DeleteMapping("/addresses/{addressId}")
+	public ResponseEntity<String> deleteAddress(@PathVariable Long addressId){
+		String status=addressService.deleteAddress(addressId);
+		return new ResponseEntity<>(status,HttpStatus.OK);
 	}
 }

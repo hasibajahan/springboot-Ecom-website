@@ -11,6 +11,7 @@ import com.ecommerce.project.model.Address;
 import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.AddressDTO;
 import com.ecommerce.project.repositories.AddressRepository;
+import com.ecommerce.project.repositories.UserRepository;
 
 @Service
 public class AddressServiceImpl implements AddressService{
@@ -20,6 +21,10 @@ public class AddressServiceImpl implements AddressService{
 	
 	@Autowired
 	private ModelMapper modelMapper;
+	
+	 @Autowired
+	 UserRepository userRepository;
+
 
 	@Override
 	public AddressDTO createAddress(AddressDTO addressDTO, User user) {
@@ -72,5 +77,49 @@ public class AddressServiceImpl implements AddressService{
 		return addresses.stream().
 					map(address -> modelMapper.map(address, AddressDTO.class))
 					.toList();
+	}
+
+	@Override
+	public AddressDTO updateAddress(Long addressId, AddressDTO addressDTO) {
+		//Fetch the address from the database
+		Address addressFromDb=addressRepository.findById(addressId)
+				.orElseThrow(() -> new ResourceNotFoundException("Address","addressId",addressId));
+		
+		//Update all the fields of the particular address
+		addressFromDb.setBuildingName(addressDTO.getBuildingName());
+		addressFromDb.setCity(addressDTO.getCity());
+		addressFromDb.setCountry(addressDTO.getCountry());
+		addressFromDb.setPincode(addressDTO.getPincode());
+		addressFromDb.setState(addressDTO.getState());
+		addressFromDb.setStreet(addressDTO.getStreet());
+		
+		//save the updated address in the database
+		Address updatedAddress=addressRepository.save(addressFromDb);
+		
+		//Update the associated user also
+		User user=addressFromDb.getUser();
+		user.getAddresses().removeIf(address -> address.getAddressId().equals(addressId));
+		user.getAddresses().add(updatedAddress);
+		userRepository.save(user);
+		
+		return modelMapper.map(updatedAddress, AddressDTO.class);
+	}
+
+	//delete address
+	@Override
+	public String deleteAddress(Long addressId) {
+		//find the address by id by using addressRepository
+		Address addressFromDb = addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
+		
+		//Remove the address from the associated user as well(in the database)
+		User user=addressFromDb.getUser();
+		user.getAddresses().removeIf(address -> address.getAddressId().equals(addressId));
+		userRepository.save(user);
+		
+		//delete it
+		addressRepository.delete(addressFromDb);
+		
+		return "Address deleted successfully with addressId: " + addressId;
 	}
 }
