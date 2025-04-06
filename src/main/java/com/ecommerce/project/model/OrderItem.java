@@ -29,7 +29,7 @@ public class OrderItem {
 	@JoinColumn(name = "order_id")
 	private Order order;
 	
-	private Integer quntity;
+	private Integer quantity;
 	private double discount;
 	private double orderedProductPrice;
 }

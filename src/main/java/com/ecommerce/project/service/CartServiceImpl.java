@@ -112,6 +112,7 @@ public class CartServiceImpl implements CartService{
 		return newCart;
 	}
 
+	//Get all carts
 	@Override
 	public List<CartDTO> getAllCarts() {
 		List<Cart> carts=cartRepository.findAll();
@@ -123,9 +124,12 @@ public class CartServiceImpl implements CartService{
 		List<CartDTO> cartDTOs=carts.stream().map(cart -> {
 			CartDTO cartDTO=modelMapper.map(cart, CartDTO.class);
 			
-			List<ProductDTO> products= cart.getCartItems().stream()
-					.map(p -> modelMapper.map(p.getProduct(), ProductDTO.class)).collect(Collectors.toList());
-				
+			List<ProductDTO> products = cart.getCartItems().stream().map(cartItem -> {
+                ProductDTO productDTO = modelMapper.map(cartItem.getProduct(), ProductDTO.class);
+                productDTO.setQuantity(cartItem.getQuantity()); // Set the quantity from CartItem
+                return productDTO;
+            }).collect(Collectors.toList());
+					
 			cartDTO.setProducts(products);
 			
 			return cartDTO;
@@ -224,48 +228,58 @@ public class CartServiceImpl implements CartService{
 		
 		return cartDTO;
 	}
-
+	
+	//Rounds a double value to two decimal places to avoid floating-point precision issues in price calculations.
+	private double roundToTwoDecimalPlaces(double value) {
+	    return Math.round(value * 100.0) / 100.0;
+	}
+	
 	//It will remove the product/item from the cart entirely
 	@Transactional
 	@Override
 	public String deleteProductFromCart(Long cartId, Long productId) {
-		Cart cart=cartRepository.findById(cartId)
-				.orElseThrow(() -> new ResourceNotFoundException("Cart","cartId",cartId));
-		
-		CartItem cartItem=cartItemRepository.findCartItemByProductIdAndCartId(cartId, productId);
-		
-		if(cartItem == null) {
-			 throw new ResourceNotFoundException("Product", "productId", productId);
-		}
-		
-		//if the product/item is present then delete it and update the cart price
-		cart.setTotalPrice(cart.getTotalPrice()-(cartItem.getProductPrice() * cartItem.getQuantity()));
-		
-		cartItemRepository.deleteCartItemByCartIdAndProductId(cartId,productId);
-	
-		return "Product " + cartItem.getProduct().getProductName() + " removed from the cart!!!";
+		Cart cart = cartRepository.findById(cartId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
+
+	    CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cartId, productId);
+
+	    if (cartItem == null) {
+	        throw new ResourceNotFoundException("Product", "productId", productId);
+	    }
+
+	    // Calculate and round new total price
+	    double updatedTotal = cart.getTotalPrice() - (cartItem.getProductPrice() * cartItem.getQuantity());
+	    cart.setTotalPrice(roundToTwoDecimalPlaces(Math.max(updatedTotal, 0))); // ensure non-negative
+
+	    cartItemRepository.deleteCartItemByCartIdAndProductId(cartId, productId);
+
+	    return "Product " + cartItem.getProduct().getProductName() + " removed from the cart!!!";
 	}
 
 	@Override
 	public void updateProductInCarts(Long cartId, Long productId) {
-		Cart cart=cartRepository.findById(cartId)
-				.orElseThrow(() -> new ResourceNotFoundException("Cart","cartId",cartId));
-		
-		Product product=productRepository.findById(productId)
-				.orElseThrow(() -> new ResourceNotFoundException("Product", "productId",productId));
-		
-		CartItem cartItem=cartItemRepository.findCartItemByProductIdAndCartId(cartId, productId);
-		
-		if(cartItem == null) {
-			throw new APIException("Product "+product.getProductName()+" not available in the cart.");
-		}
-			double cartPrice=cart.getTotalPrice() - (cartItem.getProductPrice() * cartItem.getQuantity());
-			
-			cartItem.setProductPrice(product.getSpecialPrice());
-			
-			cart.setTotalPrice(cartPrice + (cartItem.getProductPrice() * cartItem.getQuantity()));
-			
-			cartItem = cartItemRepository.save(cartItem);
+		 Cart cart = cartRepository.findById(cartId)
+		            .orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
+
+		    Product product = productRepository.findById(productId)
+		            .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+		    CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cartId, productId);
+
+		    if (cartItem == null) {
+		        throw new APIException("Product " + product.getProductName() + " not available in the cart.");
+		    }
+
+		    double itemTotal = cartItem.getProductPrice() * cartItem.getQuantity();
+		    double updatedTotal = cart.getTotalPrice() - itemTotal;
+
+		    cartItem.setProductPrice(product.getSpecialPrice());
+
+		    updatedTotal += cartItem.getProductPrice() * cartItem.getQuantity();
+
+		    cart.setTotalPrice(roundToTwoDecimalPlaces(Math.max(updatedTotal, 0))); // ensure non-negative
+
+		    cartItemRepository.save(cartItem);
 		}
 	}
 
