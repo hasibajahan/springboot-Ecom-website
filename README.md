@@ -1,5 +1,6 @@
 # springboot-Ecom-website
 E commerce website using springBoot
+
 A **full-stack E-Commerce platform** built using **Spring Boot** for backend services.  
 This application provides product browsing, user authentication, cart management, and order processing functionalities — designed with scalability, security, and maintainability in mind.
 
@@ -42,8 +43,13 @@ This application provides product browsing, user authentication, cart management
 ## 📂 Project Structure
 
 springboot-Ecom-website
-┣ 📂 src/main/java/... # Application source code
-┣ 📂 src/main/resources # Config files, templates, static resources
-┣ 📂 images # Product images
-┣ 📜 pom.xml # Maven dependencies
-┗ 📜 README.md # Project documentation
+
+|- src/main/java/... # Application source code
+
+|- src/main/resources # Config files, templates, static resources
+
+|- images # Product images
+
+|- pom.xml # Maven dependencies
+
+|- README.md # Project documentation
